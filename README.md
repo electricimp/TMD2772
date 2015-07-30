@@ -4,6 +4,10 @@ This class allows the Electric Imp to control a [TMD2772](https://ams.com/jpn/co
 
 Note that all methods in this class will throw exceptions upon I²C errors.
 
+## Example Usage
+
+For an example project that uses the TMD2772 to calculate light intensity in units of lux, see the [Lux Calculator](examples/lux) class.
+
 ## Constructor: TMD2772(*i2c, [address]*)
 
 ### Parameters
@@ -113,12 +117,6 @@ The value of *gain* should be one of 1, 8, 16, or 120.  This value defaults to 1
 Returns an ALS data reading from channel 0 on the TMD2772.  This value will fit in a 16-bit integer and can be scaled by setting the ALS gain.
 
 The TMD2772 has two sensor photodiodes, named channel 0 and channel 1.  The channel 0 photodiode is sensitive to both visible and infrared light, while the channel 1 photodiode is primarily sensitive to infrared light.  By combining readings from both of these sensors, an approximation of the visible light in units of lux can be obtained.
-
-### Usage
-
-```squirrel
-// TODO: add a section for the lux equation
-```
 
 ## alsReadChannel1()
 
