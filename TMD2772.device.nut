@@ -29,10 +29,9 @@ class TMD2772 {
     _address = null;
 
     // -------------------- Device-level Methods -------------------- //
-
-    function constructor(i2c, address=0x39) {
+    function constructor(i2c, address=0x72) {
         _i2c = i2c;
-        _address = address << 1;
+        _address = address;
     }
 
     function readStatus() {
