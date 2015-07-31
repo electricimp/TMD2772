@@ -80,19 +80,21 @@ See [ALS Methods](#als-methods) for a desctiption of the sensor channels availab
 
 Enables/disables and configures the ALS interrupt system. When enabled, the TMD2772 can assert an interrupt when the ALS reading goes above or below specified values. Additionally, the number of required readings above or below the thresholds before an interrupt is asserted can be set.
 
+Returns the actual persistence set.
+
 ### Parameters
 | Name           | Type           | Default | Description |
 |----------------|----------------|---------|-------------|
 | enabled        | Boolean        | N/A     | Whether the TMD2772 should assert interrupts when ALS readings go beyond the thresholds. |
 | lowerThreshold | 16-bit Integer | 0       | If ALS readings go below this value, an interrupt will be asserted. |
 | upperThreshold | 16-bit Integer | 0       | If ALS readings go above this value, an interrupt will be asserted. |
-| persistence    | 4-bit Integer  | 1       | How many consecutive readings must pass the threshold before an interrupt is asserted. For values 1-3, this corresponds directly to the number of consecutive readings required. For values above 3, this value is calculated as `value = (persistence - 3) * 5` to determine the number of consecutive readings required. When 0, an interrupt will be asserted for every ALS reading. |
+| persistence    | 4-bit Integer  | 1       | How many consecutive readings must pass the threshold before an interrupt is asserted. For values 1-3, this corresponds directly to the number of consecutive readings required. For values above 3, this value will be rounded down to the nearest multiple of 5. |
 
 #### Example
 
 ```squirrel
 // Configure interrupt to assert if the ALS reads below 1 or above 10 at least 15 times in a row
-prox.alsConfigureInterrupt(true, 1, 10, 5);
+prox.alsConfigureInterrupt(true, 1, 10, 15);
 ```
 
 
@@ -115,6 +117,8 @@ The TMD2772 can be configured to use either of its two sensor photodiodes for pr
 ### proximityConfigureInterrupt(*enabled, [lowerThreshold, upperThreshold, persistence]*)
 
 Enables/disables and configures the proximity sensor interrupt system. When enabled, the TMD2772 can assert an interrupt when the proximity sensor reading goes above or below specified values. Additionally, the number of required readings above or below the thresholds before an interrupt is asserted can be set.
+
+Returns the actual persistence set (note that this will always be equal to the persistence requested).
 
 #### Parameters
 | Name           | Type           | Default | Description |
@@ -158,21 +162,17 @@ if(proxStatus.ALS_INTERRUPT || proxStatus.PROXIMITY_INTERRUPT) {
 }
 ```
 
-### setWait(*waitTime, [shouldMakeLong]*)
+### setWait(*waitTime*)
 
 Sets how long the TMD2772 should pause in between sensor readings. This can have significant power implications, as the TMD2772 only consumes around 90 μA during this waiting period. For a more detailed breakdown of how to use wait time for power management, see the TMD2772 datasheet.
 
-#### Parameters
-| Name           | Type          | Default | Description |
-|----------------|---------------|---------|-------------|
-| waitTime       | 8-Bit Integer | N/A     | A multiplier to set the length of the pause. This parameter is multiplied by 2.73 ms for the actual pause time unless *shouldMakeLong* is true. |
-| shouldMakeLong | Boolean       | false   | Whether the *waitTime* parameter should instead be multiplied by 32.76 ms (a 12x increase) to determine the pause time. |
+The wait time should be given as a float in milliseconds.  The TMD2772 has a precision of 2.73 ms for wait periods up to 698 ms and a precision of 32.76 ms for wait times up to 8353 ms, so this method rounds up to the nearest available wait time and returns the actual wait time set.
 
 #### Example
 
 ```squirrel
-// Wait for 8.4 seconds between each reading
-prox.setWait(255, true);
+// Wait for around 8 seconds between each reading
+prox.setWait(8000);
 ```
 
 ### setSleepAfterInterrupt(*shouldSleep*)

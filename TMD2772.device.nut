@@ -78,6 +78,14 @@ class TMD2772 {
             translatedPersistence = (persistence / 5) + 3;
         }
         _writeRegister(REG_PERSISTENCE, translatedPersistence, 0x0F);
+        
+        if(persistence == 4) {
+            return 3;
+        } else if(persistence > 3) {
+            return (translatedPersistence - 3) * 5;
+        } else {
+            return persistence;
+        }
     }
 
     function alsReadChannel0() {
@@ -124,6 +132,8 @@ class TMD2772 {
 
         // Write persistence filter
         _writeRegister(REG_PERSISTENCE, persistence << 4, 0xF0);
+        
+        return persistence;
     }
     // -------------------- Device-level Methods -------------------- //
     function readStatus() {
@@ -149,18 +159,42 @@ class TMD2772 {
         _writeRegister(REG_ENABLE, value, 0x40);
     }
 
-    function setWait(waitTime, shouldMakeLong=false) {
+    function setWait(waitTime) {
         if(waitTime == 0) {
             _writeRegister(REG_ENABLE, 0x00, 0x08);
+            return 0;
         } else {
-            // First write base multiplier
-            _writeRegister(REG_ENABLE, 0x08, 0x08);
-            local waitValue = 256 - waitTime;
-            _writeRegister(REG_WAIT, waitValue);
+            // The wait interval can be programmed in units of 2.73 or 32.6 ms
+            // Choosing 2.73 ms gives greater precision but a smaller range, so we only select 32.6 ms if we need the range
+            local needsWLong = waitTime > 698;
+            
+            local waitUnit = 2.73;
+            local wLongConfig = 0x00;
+            
+            if(needsWLong) {
+                // First update the time unit
+                waitUnit = 32.76;
 
-            // Then write long (12x) multiplier
-            local makeLongValue = shouldMakeLong ? 0x02 : 0x00;
-            _writeRegister(REG_CONFIG, makeLongValue, 0x02);
+                // Then enable the long multiplier
+                wLongConfig =  0x02;
+            }
+            
+            local numUnits = waitTime / waitUnit;
+            
+            // Clean up numUnits - always round up
+            numUnits = math.ceil(numUnits).tointeger();
+            
+            // Write base multiplier
+            local waitValue = 256 - numUnits;
+            _writeRegister(REG_WAIT, waitValue);
+            
+            // Enable or disable long units
+            _writeRegister(REG_CONFIG, wLongConfig, 0x02);
+            
+            // Finally, enable waiting
+            _writeRegister(REG_ENABLE, 0x08, 0x08);
+            
+            return numUnits * waitUnit;
         }
     }
 
@@ -205,4 +239,3 @@ class TMD2772 {
         }
     }
 }
-
