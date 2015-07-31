@@ -28,53 +28,13 @@ class TMD2772 {
     _i2c = null;
     _address = null;
 
-    // -------------------- Device-level Methods -------------------- //
     function constructor(i2c, address=0x72) {
         _i2c = i2c;
         _address = address;
     }
 
-    function readStatus() {
-        local status = _readRegister(REG_STATUS);
-        return {
-            "PROXIMITY_SATURATED"   : status & 0x40 ? true : false,
-            "PROXIMITY_INTERRUPT"   : status & 0x20 ? true : false,
-            "ALS_INTERRUPT"         : status & 0x10 ? true : false,
-            "PROXIMITY_VALID"       : status & 0x02 ? true : false,
-            "ALS_VALID"             : status & 0x01 ? true : false
-        };
-    }
-
-    function setSleepAfterInterrupt(shouldSleep) {
-        local value = shouldSleep ? 0x40 : 0x00;
-        _writeRegister(REG_ENABLE, value, 0x40);
-    }
-
-    function setWait(waitTime, shouldMakeLong=false) {
-        if(waitTime == 0) {
-            _writeRegister(REG_ENABLE, 0x00, 0x08);
-        } else {
-            // First write base multiplier
-            _writeRegister(REG_ENABLE, 0x08, 0x08);
-            local waitValue = 256 - waitTime;
-            _writeRegister(REG_WAIT, waitValue);
-
-            // Then write long (12x) multiplier
-            local makeLongValue = shouldMakeLong ? 0x02 : 0x00;
-            _writeRegister(REG_CONFIG, makeLongValue, 0x02);
-        }
-    }
-
-    function clearInterrupt() {
-        local writeError = _i2c.write(_address, COMMAND_INTERRUPT_CLEAR.tochar());
-        if(writeError != 0) {
-            throw "i2c error: " + writeError;
-        }
-    }
-
     // -------------------- ALS-Specific Methods -------------------- //
-
-    function alsSetEnabled(shouldEnable) {
+    function alsEnable(shouldEnable = true) {
         // First generate a naive value assuming that proximity sensing is disabled
         local value = shouldEnable ? 0x03 : 0x00;
 
@@ -96,6 +56,8 @@ class TMD2772 {
             translatedGain = 0x00;
         }
         _writeRegister(REG_CONTROL, translatedGain, 0x03);
+
+        return translatedGain;
     }
 
     function alsConfigureInterrupt(enabled, lowerThreshold=0x00, upperThreshold=0x00, persistence=1) {
@@ -128,7 +90,7 @@ class TMD2772 {
 
     // -------------------- Proximity-Specific Methods -------------------- //
 
-    function proximitySetEnabled(shouldEnable) {
+    function proximityEnable(shouldEnable = true) {
         // Select a diode to sense with if none is already selected
         local selectedDiode = _readRegister(REG_CONTROL);
         if((selectedDiode & 0x30) == 0) {
@@ -163,6 +125,46 @@ class TMD2772 {
         // Write persistence filter
         _writeRegister(REG_PERSISTENCE, persistence << 4, 0xF0);
     }
+    // -------------------- Device-level Methods -------------------- //
+    function readStatus() {
+        local status = _readRegister(REG_STATUS);
+        return {
+            "PROXIMITY_SATURATED"   : status & 0x40 ? true : false,
+            "PROXIMITY_INTERRUPT"   : status & 0x20 ? true : false,
+            "ALS_INTERRUPT"         : status & 0x10 ? true : false,
+            "PROXIMITY_VALID"       : status & 0x02 ? true : false,
+            "ALS_VALID"             : status & 0x01 ? true : false
+        };
+    }
+
+    function clearInterrupt() {
+        local writeError = _i2c.write(_address, COMMAND_INTERRUPT_CLEAR.tochar());
+        if(writeError != 0) {
+            throw "i2c error: " + writeError;
+        }
+    }
+
+    function setSleepAfterInterrupt(shouldSleep) {
+        local value = shouldSleep ? 0x40 : 0x00;
+        _writeRegister(REG_ENABLE, value, 0x40);
+    }
+
+    function setWait(waitTime, shouldMakeLong=false) {
+        if(waitTime == 0) {
+            _writeRegister(REG_ENABLE, 0x00, 0x08);
+        } else {
+            // First write base multiplier
+            _writeRegister(REG_ENABLE, 0x08, 0x08);
+            local waitValue = 256 - waitTime;
+            _writeRegister(REG_WAIT, waitValue);
+
+            // Then write long (12x) multiplier
+            local makeLongValue = shouldMakeLong ? 0x02 : 0x00;
+            _writeRegister(REG_CONFIG, makeLongValue, 0x02);
+        }
+    }
+
+
 
     // -------------------- PRIVATE METHODS -------------------- //
 
