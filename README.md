@@ -4,9 +4,9 @@ This class allows the Electric Imp to control a [TMD2772](https://ams.com/jpn/co
 
 Note that all methods in this class will throw exceptions upon I²C errors.
 
-You can view the library’s source code on [GitHub](https://github.com/electricimp/TMP2772/tree/v1.0.0).
+You can view the library’s source code on [GitHub](https://github.com/electricimp/TMD2772/tree/v1.0.0).
 
-**To add this library to your project, add** `#require "TMP2772.class.nut:1.0.0"` **to the top of your device code.**
+**To add this library to your project, add** `#require "TMD2772.class.nut:1.0.0"` **to the top of your device code.**
 
 ## Example Usage
 
