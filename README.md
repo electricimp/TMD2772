@@ -1,4 +1,4 @@
-# TMD2772 Ambient Light and Proximity Sensor
+# TMD2772 v1.0.0
 
 This class allows the Electric Imp to control a [TMD2772](https://ams.com/jpn/content/download/685865/1786649/file/TMD2772WA_Datasheet-[1-20].pdf) ambient light sensor (ALS) and proximity sensor. This module is a low-power I²C sensor with a built-in IR LED for the proximity sensor and fully configurable interrupt generation capabilities. The module also allows for significant configuration of the proximity sensor's IR LED that this class does not yet support.
 
